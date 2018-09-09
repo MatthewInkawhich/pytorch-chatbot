@@ -1,22 +1,17 @@
-class GreedySearchDecoder(torch.jit.ScriptModule):
-    def __init__(self, encoder, decoder, decoder_n_layers):
+class GreedySearchDecoder(nn.Module):
+    def __init__(self, encoder, decoder):
         super(GreedySearchDecoder, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self._device = device
-        self._SOS_token = SOS_token
-        self._decoder_n_layers = decoder_n_layers
 
-    __constants__ = ['_device', '_SOS_token', '_decoder_n_layers']
-
-    @torch.jit.script_method
-    def forward(self, input_seq : torch.Tensor, input_length : torch.Tensor, max_length : int):
+    def forward(self, input_seq, input_length, max_length):
         # Forward input through encoder model
         encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
-        decoder_hidden = encoder_hidden[:self._decoder_n_layers]
+        decoder_hidden = encoder_hidden[:decoder.n_layers]
         # Initialize decoder input with SOS_token
-        decoder_input = torch.ones(1, 1, device=self._device, dtype=torch.long) * self._SOS_token
+        decoder_input = torch.LongTensor([[SOS_token]])
+        decoder_input = decoder_input.to(device)
         # Initialize tensors to append decoded words to
         all_tokens = torch.zeros([0], device=self._device, dtype=torch.long)
         all_scores = torch.zeros([0], device=self._device)
